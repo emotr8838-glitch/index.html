@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Menu Link — Halaman Utama</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --accent:#4f46e5;
+      --muted:#94a3b8;
+      --glass: rgba(255,255,255,0.03);
+      color-scheme: dark;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+      background: linear-gradient(180deg,var(--bg),#071029 80%);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      color:#e6eef8;
+    }
+    .container{
+      width:100%;
+      max-width:980px;
+      background:linear-gradient(180deg,var(--card), rgba(11,18,32,0.8));
+      border-radius:14px;
+      box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+      padding:28px;
+      backdrop-filter: blur(6px);
+    }
+    header{display:flex;align-items:center;gap:16px}
+    .logo{
+      width:56px;height:56px;border-radius:10px;display:grid;place-items:center;font-weight:700;font-size:20px;background:linear-gradient(135deg,var(--accent),#06b6d4);
+      color:white;box-shadow:0 6px 18px rgba(79,70,229,0.2)
+    }
+    h1{margin:0;font-size:20px}
+    p.lead{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+    .menu-row{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+    .btn{
+      display:inline-flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.03);cursor:pointer;
+      user-select:none;transition:transform .08s ease,box-shadow .12s;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),#06b6d4);color:white;border:none;box-shadow:0 6px 20px rgba(79,70,229,0.18)}
+
+    .card{
+      margin-top:18px;padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.03)
+    }
+
+    /* Link list */
+    .links{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+    .link-item{padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid rgba(255,255,255,0.02);display:flex;flex-direction:column;gap:8px}
+    .link-title{font-weight:600}
+    .link-desc{font-size:13px;color:var(--muted)}
+    .link-actions{margin-top:auto;display:flex;gap:8px}
+    .small{font-size:13px;padding:8px 10px;border-radius:8px}
+
+    /* modal */
+    .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(2,6,23,0.5);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .18s}
+    .overlay.open{opacity:1;pointer-events:auto}
+    .modal{width:100%;max-width:520px;padding:18px;border-radius:12px;background:linear-gradient(180deg,#071029, #061025);border:1px solid rgba(255,255,255,0.03)}
+    form.row{display:grid;gap:10px}
+    input, textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+    label{font-size:13px;color:var(--muted)}
+
+    footer{margin-top:14px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+
+    @media (max-width:560px){.logo{width:44px;height:44px;font-size:16px}}
+  </style>
+</head>
+<body>
+  <div class="container" role="main">
+    <header>
+      <div class="logo">LM</div>
+      <div>
+        <h1>Halaman Menu — Pilih Tujuan</h1>
+        <p class="lead">Klik tombol "Tampilkan Pilihan" untuk melihat daftar tautan. Contoh: profil, toko, sosial media, dsb.</p>
+      </div>
+    </header>
+
+    <div class="menu-row">
+      <button class="btn primary" id="toggleMenu" aria-expanded="false">Tampilkan Pilihan ▾</button>
+      <button class="btn" id="addLinkBtn">➕ Add Link</button>
+      <button class="btn" id="shuffleBtn">🔀 Randomize</button>
+    </div>
+
+    <div class="card" id="menuCard" hidden>
+      <div class="links" id="linksContainer" aria-live="polite"></div>
+    </div>
+
+    <footer>
+      <div>Tip: add link to add link.</div>
+      <div>&copy; <span id="year"></span></div>
+    </footer>
+  </div>
+
+  <!-- modal untuk tambah link -->
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">Add new link</h3>
+      <form id="addForm" class="row">
+        <div>
+          <label for="title">Judul</label>
+          <input id="title" name="title" placeholder="example : www.example.com" required />
+        </div>
+        <div>
+          <label for="url">URL</label>
+          <input id="url" name="url" placeholder="https://" type="url" required />
+        </div>
+        <div>
+          <label for="desc">Deskripsi (opsional)</label>
+          <input id="desc" name="desc" placeholder="Sekilas tentang tautan" />
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+          <button type="button" class="btn" id="cancelAdd">Batal</button>
+          <button type="submit" class="btn primary">Simpan & Tambah</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // contoh daftar link yang akan ditampilkan. Ubah atau tambahkan sesuai kebutuhan.
+    const defaultLinks = [
+      {title: 'Google', url: 'https://www.google.com', desc: 'google.'},
+      {title: 'YouTube', url: 'https://www.youtube.com', desc: 'youtube.'},
+      {title: 'Twitter (X)', url: 'https://twitter.com', desc: 'twitter.'},
+      {title: 'GitHub', url: 'https://github.com', desc: 'github.'}
+    ];
+
+    const yearEl = document.getElementById('year');
+    yearEl.textContent = new Date().getFullYear();
+
+    const linksContainer = document.getElementById('linksContainer');
+    const menuCard = document.getElementById('menuCard');
+    const toggleMenuBtn = document.getElementById('toggleMenu');
+    const overlay = document.getElementById('overlay');
+    const addLinkBtn = document.getElementById('addLinkBtn');
+    const addForm = document.getElementById('addForm');
+    const cancelAdd = document.getElementById('cancelAdd');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+
+    // load links from localStorage jika ada, supaya tersimpan di browser pengguna
+    function loadLinks(){
+      try{
+        const raw = localStorage.getItem('lm_links');
+        if(raw){
+          return JSON.parse(raw);
+        }
+      }catch(e){console.warn('failed. please try again',e)}
+      return defaultLinks;
+    }
+
+    let links = loadLinks();
+
+    function saveLinks(){
+      try{localStorage.setItem('lm_links', JSON.stringify(links));}catch(e){console.warn('Gagal simpan',e)}
+    }
+
+    function openInNewTab(url){
+      // keamanan: pastikan url dimulai dengan http/https
+      if(!/^https?:\/\//i.test(url)){
+        alert('URL must start with http:// or https:// or even www.');
+        return;
+      }
+      window.open(url, '_blank', 'noopener');
+    }
+
+    function renderLinks(){
+      linksContainer.innerHTML = '';
+      if(links.length === 0){
+        linksContainer.innerHTML = '<div style="color:var(--muted)">Belum ada link. Tambah link dengan tombol "Tambah Link".</div>';
+        return;
+      }
+      links.forEach((l, idx) => {
+        const item = document.createElement('div');
+        item.className = 'link-item';
+        item.innerHTML = `
+          <div class="link-title">${escapeHtml(l.title)}</div>
+          <div class="link-desc">${escapeHtml(l.desc || '')}</div>
+          <div class="link-actions">
+            <button class="small btn" data-idx="${idx}" data-action="open">Buka</button>
+            <button class="small btn" data-idx="${idx}" data-action="copy">Salin URL</button>
+            <button class="small btn" data-idx="${idx}" data-action="remove">Hapus</button>
+          </div>
+        `;
+        linksContainer.appendChild(item);
+      });
+    }
+
+    // sanitasi sederhana untuk output text (bukan untuk keamanan server-side)
+    function escapeHtml(str){
+      return String(str || '').replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]});
+    }
+
+    // delegasi klik pada link-actions
+    linksContainer.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if(!btn) return;
+      const idx = Number(btn.dataset.idx);
+      const action = btn.dataset.action;
+      if(action === 'open') openInNewTab(links[idx].url);
+      if(action === 'copy'){
+        navigator.clipboard?.writeText(links[idx].url).then(()=>{
+          btn.textContent='Tersalin ✓';
+          setTimeout(()=>btn.textContent='Salin URL',900);
+        }).catch(()=>alert('Gagal menyalin.'));
+      }
+      if(action === 'remove'){
+        if(confirm('Hapus link "' + links[idx].title + '" ?')){
+          links.splice(idx,1);saveLinks();renderLinks();
+        }
+      }
+    });
+
+    // toggle show/hide
+    toggleMenuBtn.addEventListener('click', () => {
+      const isOpen = !menuCard.hidden;
+      menuCard.hidden = isOpen;
+      toggleMenuBtn.setAttribute('aria-expanded', String(!isOpen));
+      toggleMenuBtn.textContent = isOpen ? 'Tampilkan Pilihan ▾' : 'Sembunyikan Pilihan ▴';
+      if(!isOpen) renderLinks();
+    });
+
+    // tambah link
+    addLinkBtn.addEventListener('click', () => {
+      overlay.classList.add('open');
+      overlay.setAttribute('aria-hidden','false');
+      document.getElementById('title').focus();
+    });
+    cancelAdd.addEventListener('click', ()=>{ closeModal(); });
+
+    addForm.addEventListener('submit', (ev)=>{
+      ev.preventDefault();
+      const title = document.getElementById('title').value.trim();
+      const url = document.getElementById('url').value.trim();
+      const desc = document.getElementById('desc').value.trim();
+      if(!title || !url){ alert('Judul dan URL wajib diisi'); return; }
+      links.push({title, url, desc});
+      saveLinks();
+      renderLinks();
+      addForm.reset();
+      closeModal();
+      // kalau menu tersembunyi, tunjukkan
+      menuCard.hidden = false;
+      toggleMenuBtn.setAttribute('aria-expanded','true');
+      toggleMenuBtn.textContent = 'Sembunyikan Pilihan ▴';
+    });
+
+    function closeModal(){
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden','true');
+    }
+
+    overlay.addEventListener('click', (e)=>{
+      if(e.target === overlay) closeModal();
+    });
+
+    // shuffle
+    shuffleBtn.addEventListener('click', ()=>{
+      for(let i = links.length -1; i>0; i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [links[i], links[j]] = [links[j], links[i]];
+      }
+      saveLinks(); renderLinks();
+    });
+
+    // render awal (tetap tersembunyi sampai user buka)
+    renderLinks();
+
+    // keyboard: Esc untuk tutup modal
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape') closeModal();
+    });
+  </script>
+</body>
+</html>
